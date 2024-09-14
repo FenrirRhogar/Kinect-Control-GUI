@@ -1,0 +1,5 @@
+C:\Users\John\Documents\kinect\KinectApp\obj\Debug\net46\KinectApp.csproj.AssemblyReference.cache
+C:\Users\John\Documents\kinect\KinectApp\obj\Debug\net46\KinectApp.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\John\Documents\kinect\KinectApp\obj\Debug\net46\KinectApp.AssemblyInfoInputs.cache
+C:\Users\John\Documents\kinect\KinectApp\obj\Debug\net46\KinectApp.AssemblyInfo.cs
+C:\Users\John\Documents\kinect\KinectApp\obj\Debug\net46\KinectApp.csproj.CoreCompileInputs.cache

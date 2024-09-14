@@ -1,0 +1,39 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v6.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v6.0": {
+      "KinectApp/1.0.0": {
+        "dependencies": {
+          "Microsoft.Kinect": "1.8.0.0"
+        },
+        "runtime": {
+          "KinectApp.dll": {}
+        }
+      },
+      "Microsoft.Kinect/1.8.0.0": {
+        "runtime": {
+          "Microsoft.Kinect.dll": {
+            "assemblyVersion": "1.8.0.0",
+            "fileVersion": "1.8.0.595"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "KinectApp/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.Kinect/1.8.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

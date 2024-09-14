@@ -1,0 +1,12 @@
+C:\Users\John\Documents\kinect\KinectApp\bin\Debug\net40\KinectApp.dll
+C:\Users\John\Documents\kinect\KinectApp\bin\Debug\net40\KinectApp.pdb
+C:\Users\John\Documents\kinect\KinectApp\bin\Debug\net40\Microsoft.Kinect.dll
+C:\Users\John\Documents\kinect\KinectApp\bin\Debug\net40\Microsoft.Kinect.xml
+C:\Users\John\Documents\kinect\KinectApp\obj\Debug\net40\KinectApp.csproj.AssemblyReference.cache
+C:\Users\John\Documents\kinect\KinectApp\obj\Debug\net40\KinectApp.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\John\Documents\kinect\KinectApp\obj\Debug\net40\KinectApp.AssemblyInfoInputs.cache
+C:\Users\John\Documents\kinect\KinectApp\obj\Debug\net40\KinectApp.AssemblyInfo.cs
+C:\Users\John\Documents\kinect\KinectApp\obj\Debug\net40\KinectApp.csproj.CoreCompileInputs.cache
+C:\Users\John\Documents\kinect\KinectApp\obj\Debug\net40\KinectApp.csproj.Up2Date
+C:\Users\John\Documents\kinect\KinectApp\obj\Debug\net40\KinectApp.dll
+C:\Users\John\Documents\kinect\KinectApp\obj\Debug\net40\KinectApp.pdb

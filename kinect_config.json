@@ -1,0 +1,40 @@
+{
+    "kinectSettings": {
+      "sensorIndex": 0,
+      "skeletonTracking": {
+        "enabled": true,
+        "mode": "default",
+        "trackingMode": "fullBody",
+        "smoothingParameters": {
+          "smoothing": 0.5,
+          "correction": 0.5,
+          "prediction": 0.5,
+          "jitterRadius": 0.05,
+          "maxDeviationRadius": 0.05
+        }
+      },
+      "depthStream": {
+        "enabled": true,
+        "mode": "default",
+        "resolution": "640x480",
+        "frameRate": 30
+      },
+      "colorStream": {
+        "enabled": true,
+        "resolution": "640x480",
+        "frameRate": 30,
+        "format": "RGB"
+      },
+      "audio": {
+        "enabled": true,
+        "beamAngleMode": "automatic"
+      },
+      "tiltAngle": 0,
+      "nearMode": false,
+      "deviceConnection": {
+        "autoReconnect": true,
+        "reconnectInterval": 5000
+      }
+    }
+  }
+  
