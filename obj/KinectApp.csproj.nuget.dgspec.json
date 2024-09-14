@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\John\\Documents\\kinect\\KinectApp\\KinectApp.csproj": {}
+    "C:\\Users\\John\\Documents\\GitHub\\Kinect-SDK-Control-GUI\\KinectApp.csproj": {}
   },
   "projects": {
-    "C:\\Users\\John\\Documents\\kinect\\KinectApp\\KinectApp.csproj": {
+    "C:\\Users\\John\\Documents\\GitHub\\Kinect-SDK-Control-GUI\\KinectApp.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\John\\Documents\\kinect\\KinectApp\\KinectApp.csproj",
+        "projectUniqueName": "C:\\Users\\John\\Documents\\GitHub\\Kinect-SDK-Control-GUI\\KinectApp.csproj",
         "projectName": "KinectApp",
-        "projectPath": "C:\\Users\\John\\Documents\\kinect\\KinectApp\\KinectApp.csproj",
+        "projectPath": "C:\\Users\\John\\Documents\\GitHub\\Kinect-SDK-Control-GUI\\KinectApp.csproj",
         "packagesPath": "C:\\Users\\John\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\John\\Documents\\kinect\\KinectApp\\obj\\",
+        "outputPath": "C:\\Users\\John\\Documents\\GitHub\\Kinect-SDK-Control-GUI\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\John\\AppData\\Roaming\\NuGet\\NuGet.Config"

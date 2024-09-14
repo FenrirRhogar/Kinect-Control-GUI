@@ -6,7 +6,9 @@
 
   <ItemGroup>
     <Reference Include="Microsoft.Kinect">
-      <HintPath>C:\Program Files\Microsoft SDKs\Kinect\v1.8\Assemblies\Microsoft.Kinect.dll</HintPath>
+<!--      <HintPath>C:\Program Files\Microsoft SDKs\Kinect\v1.8\Assemblies\Microsoft.Kinect.dll</HintPath>
+-->
+      <HintPath>Microsoft.Kinect.dll</HintPath>      
     </Reference>
     <!-- Add other Kinect SDK references here if needed -->
   </ItemGroup>
