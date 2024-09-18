@@ -17,7 +17,6 @@ C:\Users\John\Documents\GitHub\Kinect-SDK-Control-GUI\bin\Debug\net4.0\KinectApp
 C:\Users\John\Documents\GitHub\Kinect-SDK-Control-GUI\bin\Debug\net4.0\KinectApp.pdb
 C:\Users\John\Documents\GitHub\Kinect-SDK-Control-GUI\bin\Debug\net4.0\Newtonsoft.Json.dll
 C:\Users\John\Documents\GitHub\Kinect-SDK-Control-GUI\bin\Debug\net4.0\Microsoft.Kinect.dll
-C:\Users\John\Documents\GitHub\Kinect-SDK-Control-GUI\bin\Debug\net4.0\Microsoft.Kinect.xml
 C:\Users\John\Documents\GitHub\Kinect-SDK-Control-GUI\obj\Debug\net4.0\KinectApp.csproj.AssemblyReference.cache
 C:\Users\John\Documents\GitHub\Kinect-SDK-Control-GUI\obj\Debug\net4.0\KinectApp.GeneratedMSBuildEditorConfig.editorconfig
 C:\Users\John\Documents\GitHub\Kinect-SDK-Control-GUI\obj\Debug\net4.0\KinectApp.AssemblyInfoInputs.cache
