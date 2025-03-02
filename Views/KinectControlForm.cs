@@ -6,6 +6,9 @@ using System.Threading;
 using System.Windows.Forms;
 using Microsoft.Kinect;
 using Newtonsoft.Json;
+using OpenTK;
+using OpenTK.Graphics;
+using OpenTK.Graphics.OpenGL;
 
 public class KinectControlForm : Form
 {
@@ -20,6 +23,10 @@ public class KinectControlForm : Form
     private ComboBox viewModeBox; // +++ New combo box for view selection
     private byte[] depthPixels; // +++ For depth frame processing
     private bool showDepth = false; // +++ Depth view flag
+    private GLControl glControl;
+    private bool show3D = false;
+    private float rotationAngle = 0.0f;
+    private Vector3 cameraPosition = new Vector3(0, 0, 5);
 
     public KinectControlForm()
     {
@@ -81,7 +88,7 @@ public class KinectControlForm : Form
 
         // +++ Add view mode selector
         viewModeBox = new ComboBox();
-        viewModeBox.Items.AddRange(new object[] { "Color View", "Depth View" });
+        viewModeBox.Items.AddRange(new object[] { "Color View", "Depth View", "3D Model View" });
         viewModeBox.SelectedIndex = 0;
         viewModeBox.Location = new Point(330, 10);
         viewModeBox.Size = new Size(120, 30);
@@ -89,6 +96,13 @@ public class KinectControlForm : Form
         viewModeBox.SelectedIndexChanged += ViewModeBox_SelectedIndexChanged;
         this.Controls.Add(viewModeBox);
         viewModeBox.BringToFront();
+
+        // Initialize the GLControl
+        glControl = new GLControl();
+        glControl.Location = pictureBox.Location;
+        glControl.Size = pictureBox.Size;
+        glControl.Visible = false;
+        this.Controls.Add(glControl);
     }
 
     protected override void OnFormClosed(FormClosedEventArgs e)
@@ -105,6 +119,19 @@ public class KinectControlForm : Form
     private void ViewModeBox_SelectedIndexChanged(object sender, EventArgs e)
     {
         showDepth = viewModeBox.SelectedIndex == 1;
+        show3D = viewModeBox.SelectedIndex == 2;
+
+        pictureBox.Visible = !show3D;
+        glControl.Visible = show3D;
+        if (show3D)
+        {
+            Setup3DEnvironment();
+            Application.Idle += Application_Idle; // Continuous rendering
+        }
+        else
+        {
+            Application.Idle -= Application_Idle;
+        }
         if (showDepth)
         {
             // Enable the depth stream
@@ -175,7 +202,7 @@ public class KinectControlForm : Form
         }
     }
     #endregion
-    
+
     public void StartKinect(KinectSensor sensor)
     {
         this.sensor = sensor;
@@ -226,7 +253,7 @@ public class KinectControlForm : Form
                 Bitmap bitmap = new Bitmap(
                     depthFrame.Width,
                     depthFrame.Height,
-                    PixelFormat.Format24bppRgb);
+                    System.Drawing.Imaging.PixelFormat.Format24bppRgb);
 
                 BitmapData bmapdata = bitmap.LockBits(
                     new Rectangle(0, 0, depthFrame.Width, depthFrame.Height),
@@ -248,8 +275,6 @@ public class KinectControlForm : Form
                 pictureBox.Image = bitmap;
             }
         }
-
-
     }
 
     private void DrawDepthSkeleton(Graphics g, DepthImageFrame depthFrame)
@@ -280,55 +305,29 @@ public class KinectControlForm : Form
                 }
 
                 // Draw lines between joints to form the skeleton
-                DrawDepthBone(g, skeleton.Joints, JointType.Head, JointType.ShoulderCenter, depthFrame);
-                DrawDepthBone(g, skeleton.Joints, JointType.ShoulderCenter, JointType.ShoulderLeft, depthFrame);
-                DrawDepthBone(g, skeleton.Joints, JointType.ShoulderCenter, JointType.ShoulderRight, depthFrame);
-                DrawDepthBone(g, skeleton.Joints, JointType.ShoulderLeft, JointType.ElbowLeft, depthFrame);
-                DrawDepthBone(g, skeleton.Joints, JointType.ShoulderRight, JointType.ElbowRight, depthFrame);
-                DrawDepthBone(g, skeleton.Joints, JointType.ElbowLeft, JointType.WristLeft, depthFrame);
-                DrawDepthBone(g, skeleton.Joints, JointType.ElbowRight, JointType.WristRight, depthFrame);
-                DrawDepthBone(g, skeleton.Joints, JointType.ShoulderCenter, JointType.Spine, depthFrame);
-                DrawDepthBone(g, skeleton.Joints, JointType.Spine, JointType.HipCenter, depthFrame);
-                DrawDepthBone(g, skeleton.Joints, JointType.HipCenter, JointType.HipLeft, depthFrame);
-                DrawDepthBone(g, skeleton.Joints, JointType.HipCenter, JointType.HipRight, depthFrame);
-                DrawDepthBone(g, skeleton.Joints, JointType.HipLeft, JointType.KneeLeft, depthFrame);
-                DrawDepthBone(g, skeleton.Joints, JointType.HipRight, JointType.KneeRight, depthFrame);
-                DrawDepthBone(g, skeleton.Joints, JointType.KneeLeft, JointType.AnkleLeft, depthFrame);
-                DrawDepthBone(g, skeleton.Joints, JointType.KneeRight, JointType.AnkleRight, depthFrame);
-                DrawDepthBone(g, skeleton.Joints, JointType.AnkleLeft, JointType.FootLeft, depthFrame);
-                DrawDepthBone(g, skeleton.Joints, JointType.AnkleRight, JointType.FootRight, depthFrame);
-                DrawDepthBone(g, skeleton.Joints, JointType.WristLeft, JointType.HandLeft, depthFrame);
-                DrawDepthBone(g, skeleton.Joints, JointType.WristRight, JointType.HandRight, depthFrame);
+                DrawBone(g, skeleton.Joints, JointType.Head, JointType.ShoulderCenter, sp => sensor.CoordinateMapper.MapSkeletonPointToDepthPoint(sp, depthFrame.Format).ToPointF(), sensor.DepthStream.FrameWidth, sensor.DepthStream.FrameHeight);
+                DrawBone(g, skeleton.Joints, JointType.ShoulderCenter, JointType.ShoulderLeft, sp => sensor.CoordinateMapper.MapSkeletonPointToDepthPoint(sp, depthFrame.Format).ToPointF(), sensor.DepthStream.FrameWidth, sensor.DepthStream.FrameHeight);
+                DrawBone(g, skeleton.Joints, JointType.ShoulderCenter, JointType.ShoulderRight, sp => sensor.CoordinateMapper.MapSkeletonPointToDepthPoint(sp, depthFrame.Format).ToPointF(), sensor.DepthStream.FrameWidth, sensor.DepthStream.FrameHeight);
+                DrawBone(g, skeleton.Joints, JointType.ShoulderLeft, JointType.ElbowLeft, sp => sensor.CoordinateMapper.MapSkeletonPointToDepthPoint(sp, depthFrame.Format).ToPointF(), sensor.DepthStream.FrameWidth, sensor.DepthStream.FrameHeight);
+                DrawBone(g, skeleton.Joints, JointType.ShoulderRight, JointType.ElbowRight, sp => sensor.CoordinateMapper.MapSkeletonPointToDepthPoint(sp, depthFrame.Format).ToPointF(), sensor.DepthStream.FrameWidth, sensor.DepthStream.FrameHeight);
+                DrawBone(g, skeleton.Joints, JointType.ElbowLeft, JointType.WristLeft, sp => sensor.CoordinateMapper.MapSkeletonPointToDepthPoint(sp, depthFrame.Format).ToPointF(), sensor.DepthStream.FrameWidth, sensor.DepthStream.FrameHeight);
+                DrawBone(g, skeleton.Joints, JointType.ElbowRight, JointType.WristRight, sp => sensor.CoordinateMapper.MapSkeletonPointToDepthPoint(sp, depthFrame.Format).ToPointF(), sensor.DepthStream.FrameWidth, sensor.DepthStream.FrameHeight);
+                DrawBone(g, skeleton.Joints, JointType.ShoulderCenter, JointType.Spine, sp => sensor.CoordinateMapper.MapSkeletonPointToDepthPoint(sp, depthFrame.Format).ToPointF(), sensor.DepthStream.FrameWidth, sensor.DepthStream.FrameHeight);
+                DrawBone(g, skeleton.Joints, JointType.Spine, JointType.HipCenter, sp => sensor.CoordinateMapper.MapSkeletonPointToDepthPoint(sp, depthFrame.Format).ToPointF(), sensor.DepthStream.FrameWidth, sensor.DepthStream.FrameHeight);
+                DrawBone(g, skeleton.Joints, JointType.HipCenter, JointType.HipLeft, sp => sensor.CoordinateMapper.MapSkeletonPointToDepthPoint(sp, depthFrame.Format).ToPointF(), sensor.DepthStream.FrameWidth, sensor.DepthStream.FrameHeight);
+                DrawBone(g, skeleton.Joints, JointType.HipCenter, JointType.HipRight, sp => sensor.CoordinateMapper.MapSkeletonPointToDepthPoint(sp, depthFrame.Format).ToPointF(), sensor.DepthStream.FrameWidth, sensor.DepthStream.FrameHeight);
+                DrawBone(g, skeleton.Joints, JointType.HipLeft, JointType.KneeLeft, sp => sensor.CoordinateMapper.MapSkeletonPointToDepthPoint(sp, depthFrame.Format).ToPointF(), sensor.DepthStream.FrameWidth, sensor.DepthStream.FrameHeight);
+                DrawBone(g, skeleton.Joints, JointType.HipRight, JointType.KneeRight, sp => sensor.CoordinateMapper.MapSkeletonPointToDepthPoint(sp, depthFrame.Format).ToPointF(), sensor.DepthStream.FrameWidth, sensor.DepthStream.FrameHeight);
+                DrawBone(g, skeleton.Joints, JointType.KneeLeft, JointType.AnkleLeft, sp => sensor.CoordinateMapper.MapSkeletonPointToDepthPoint(sp, depthFrame.Format).ToPointF(), sensor.DepthStream.FrameWidth, sensor.DepthStream.FrameHeight);
+                DrawBone(g, skeleton.Joints, JointType.KneeRight, JointType.AnkleRight, sp => sensor.CoordinateMapper.MapSkeletonPointToDepthPoint(sp, depthFrame.Format).ToPointF(), sensor.DepthStream.FrameWidth, sensor.DepthStream.FrameHeight);
+                DrawBone(g, skeleton.Joints, JointType.AnkleLeft, JointType.FootLeft, sp => sensor.CoordinateMapper.MapSkeletonPointToDepthPoint(sp, depthFrame.Format).ToPointF(), sensor.DepthStream.FrameWidth, sensor.DepthStream.FrameHeight);
+                DrawBone(g, skeleton.Joints, JointType.AnkleRight, JointType.FootRight, sp => sensor.CoordinateMapper.MapSkeletonPointToDepthPoint(sp, depthFrame.Format).ToPointF(), sensor.DepthStream.FrameWidth, sensor.DepthStream.FrameHeight);
+                DrawBone(g, skeleton.Joints, JointType.WristLeft, JointType.HandLeft, sp => sensor.CoordinateMapper.MapSkeletonPointToDepthPoint(sp, depthFrame.Format).ToPointF(), sensor.DepthStream.FrameWidth, sensor.DepthStream.FrameHeight);
+                DrawBone(g, skeleton.Joints, JointType.WristRight, JointType.HandRight, sp => sensor.CoordinateMapper.MapSkeletonPointToDepthPoint(sp, depthFrame.Format).ToPointF(), sensor.DepthStream.FrameWidth, sensor.DepthStream.FrameHeight);
             }
         }
     }
 
-    private void DrawDepthBone(Graphics g, JointCollection joints, JointType jointType1, JointType jointType2, DepthImageFrame depthFrame)
-    {
-        Joint joint1 = joints[jointType1];
-        Joint joint2 = joints[jointType2];
-
-        // Only draw if both joints are tracked
-        if (joint1.TrackingState == JointTrackingState.Tracked && joint2.TrackingState == JointTrackingState.Tracked)
-        {
-            // Map joints to depth space
-            DepthImagePoint point1 = sensor.CoordinateMapper.MapSkeletonPointToDepthPoint(joint1.Position, depthFrame.Format);
-            DepthImagePoint point2 = sensor.CoordinateMapper.MapSkeletonPointToDepthPoint(joint2.Position, depthFrame.Format);
-
-            // Calculate scaling factors
-            float scaleX = (float)pictureBox.Width / sensor.DepthStream.FrameWidth;
-            float scaleY = (float)pictureBox.Height / sensor.DepthStream.FrameHeight;
-
-            // Apply scaling
-            int x1 = (int)(point1.X * scaleX);
-            int y1 = (int)(point1.Y * scaleY);
-            int x2 = (int)(point2.X * scaleX);
-            int y2 = (int)(point2.Y * scaleY);
-
-            // Draw the line
-            g.DrawLine(Pens.Green, x1, y1, x2, y2);
-        }
-    }
     #endregion
 
     #region Color Frame Processing
@@ -346,7 +345,7 @@ public class KinectControlForm : Form
                 Bitmap bitmap = new Bitmap(
                     colorFrame.Width,
                     colorFrame.Height,
-                    PixelFormat.Format32bppRgb);
+                    System.Drawing.Imaging.PixelFormat.Format32bppRgb);
 
                 BitmapData bmapdata = bitmap.LockBits(
                     new Rectangle(0, 0, colorFrame.Width, colorFrame.Height),
@@ -407,59 +406,29 @@ public class KinectControlForm : Form
                     }
                 }
 
-                // Draw lines between joints to form the skeleton
-                DrawColorBone(g, skeleton.Joints, JointType.Head, JointType.ShoulderCenter);
-                DrawColorBone(g, skeleton.Joints, JointType.ShoulderCenter, JointType.ShoulderLeft);
-                DrawColorBone(g, skeleton.Joints, JointType.ShoulderCenter, JointType.ShoulderRight);
-                DrawColorBone(g, skeleton.Joints, JointType.ShoulderLeft, JointType.ElbowLeft);
-                DrawColorBone(g, skeleton.Joints, JointType.ShoulderRight, JointType.ElbowRight);
-                DrawColorBone(g, skeleton.Joints, JointType.ElbowLeft, JointType.WristLeft);
-                DrawColorBone(g, skeleton.Joints, JointType.ElbowRight, JointType.WristRight);
-                DrawColorBone(g, skeleton.Joints, JointType.ShoulderCenter, JointType.Spine);
-                DrawColorBone(g, skeleton.Joints, JointType.Spine, JointType.HipCenter);
-                DrawColorBone(g, skeleton.Joints, JointType.HipCenter, JointType.HipLeft);
-                DrawColorBone(g, skeleton.Joints, JointType.HipCenter, JointType.HipRight);
-                DrawColorBone(g, skeleton.Joints, JointType.HipLeft, JointType.KneeLeft);
-                DrawColorBone(g, skeleton.Joints, JointType.HipRight, JointType.KneeRight);
-                DrawColorBone(g, skeleton.Joints, JointType.KneeLeft, JointType.AnkleLeft);
-                DrawColorBone(g, skeleton.Joints, JointType.KneeRight, JointType.AnkleRight);
-                DrawColorBone(g, skeleton.Joints, JointType.AnkleLeft, JointType.FootLeft);
-                DrawColorBone(g, skeleton.Joints, JointType.AnkleRight, JointType.FootRight);
-                DrawColorBone(g, skeleton.Joints, JointType.WristLeft, JointType.HandLeft);
-                DrawColorBone(g, skeleton.Joints, JointType.WristRight, JointType.HandRight);
+                DrawBone(g, skeleton.Joints, JointType.Head, JointType.ShoulderCenter, sp => sensor.CoordinateMapper.MapSkeletonPointToColorPoint(sp, currentFormat).ToPointF(), colorWidth, colorHeight);
+                DrawBone(g, skeleton.Joints, JointType.ShoulderCenter, JointType.ShoulderLeft, sp => sensor.CoordinateMapper.MapSkeletonPointToColorPoint(sp, currentFormat).ToPointF(), colorWidth, colorHeight);
+                DrawBone(g, skeleton.Joints, JointType.ShoulderCenter, JointType.ShoulderRight, sp => sensor.CoordinateMapper.MapSkeletonPointToColorPoint(sp, currentFormat).ToPointF(), colorWidth, colorHeight);
+                DrawBone(g, skeleton.Joints, JointType.ShoulderLeft, JointType.ElbowLeft, sp => sensor.CoordinateMapper.MapSkeletonPointToColorPoint(sp, currentFormat).ToPointF(), colorWidth, colorHeight);
+                DrawBone(g, skeleton.Joints, JointType.ShoulderRight, JointType.ElbowRight, sp => sensor.CoordinateMapper.MapSkeletonPointToColorPoint(sp, currentFormat).ToPointF(), colorWidth, colorHeight);
+                DrawBone(g, skeleton.Joints, JointType.ElbowLeft, JointType.WristLeft, sp => sensor.CoordinateMapper.MapSkeletonPointToColorPoint(sp, currentFormat).ToPointF(), colorWidth, colorHeight);
+                DrawBone(g, skeleton.Joints, JointType.ElbowRight, JointType.WristRight, sp => sensor.CoordinateMapper.MapSkeletonPointToColorPoint(sp, currentFormat).ToPointF(), colorWidth, colorHeight);
+                DrawBone(g, skeleton.Joints, JointType.ShoulderCenter, JointType.Spine, sp => sensor.CoordinateMapper.MapSkeletonPointToColorPoint(sp, currentFormat).ToPointF(), colorWidth, colorHeight);
+                DrawBone(g, skeleton.Joints, JointType.Spine, JointType.HipCenter, sp => sensor.CoordinateMapper.MapSkeletonPointToColorPoint(sp, currentFormat).ToPointF(), colorWidth, colorHeight);
+                DrawBone(g, skeleton.Joints, JointType.HipCenter, JointType.HipLeft, sp => sensor.CoordinateMapper.MapSkeletonPointToColorPoint(sp, currentFormat).ToPointF(), colorWidth, colorHeight);
+                DrawBone(g, skeleton.Joints, JointType.HipCenter, JointType.HipRight, sp => sensor.CoordinateMapper.MapSkeletonPointToColorPoint(sp, currentFormat).ToPointF(), colorWidth, colorHeight);
+                DrawBone(g, skeleton.Joints, JointType.HipLeft, JointType.KneeLeft, sp => sensor.CoordinateMapper.MapSkeletonPointToColorPoint(sp, currentFormat).ToPointF(), colorWidth, colorHeight);
+                DrawBone(g, skeleton.Joints, JointType.HipRight, JointType.KneeRight, sp => sensor.CoordinateMapper.MapSkeletonPointToColorPoint(sp, currentFormat).ToPointF(), colorWidth, colorHeight);
+                DrawBone(g, skeleton.Joints, JointType.KneeLeft, JointType.AnkleLeft, sp => sensor.CoordinateMapper.MapSkeletonPointToColorPoint(sp, currentFormat).ToPointF(), colorWidth, colorHeight);
+                DrawBone(g, skeleton.Joints, JointType.KneeRight, JointType.AnkleRight, sp => sensor.CoordinateMapper.MapSkeletonPointToColorPoint(sp, currentFormat).ToPointF(), colorWidth, colorHeight);
+                DrawBone(g, skeleton.Joints, JointType.AnkleLeft, JointType.FootLeft, sp => sensor.CoordinateMapper.MapSkeletonPointToColorPoint(sp, currentFormat).ToPointF(), colorWidth, colorHeight);
+                DrawBone(g, skeleton.Joints, JointType.AnkleRight, JointType.FootRight, sp => sensor.CoordinateMapper.MapSkeletonPointToColorPoint(sp, currentFormat).ToPointF(), colorWidth, colorHeight);
+                DrawBone(g, skeleton.Joints, JointType.WristLeft, JointType.HandLeft, sp => sensor.CoordinateMapper.MapSkeletonPointToColorPoint(sp, currentFormat).ToPointF(), colorWidth, colorHeight);
+                DrawBone(g, skeleton.Joints, JointType.WristRight, JointType.HandRight, sp => sensor.CoordinateMapper.MapSkeletonPointToColorPoint(sp, currentFormat).ToPointF(), colorWidth, colorHeight);
             }
         }
     }
 
-    private void DrawColorBone(Graphics g, JointCollection joints, JointType jointType1, JointType jointType2)
-    {
-        Joint joint1 = joints[jointType1];
-        Joint joint2 = joints[jointType2];
-
-        // Only draw if both joints are tracked
-        if (joint1.TrackingState == JointTrackingState.Tracked && joint2.TrackingState == JointTrackingState.Tracked)
-        {
-            // Map joints to color space
-            ColorImageFormat currentFormat = sensor.ColorStream.Format;
-            ColorImagePoint point1 = sensor.CoordinateMapper.MapSkeletonPointToColorPoint(joint1.Position, currentFormat);
-            ColorImagePoint point2 = sensor.CoordinateMapper.MapSkeletonPointToColorPoint(joint2.Position, currentFormat);
-
-            // Calculate scaling factors
-            int colorWidth = sensor.ColorStream.FrameWidth;
-            int colorHeight = sensor.ColorStream.FrameHeight;
-            float scaleX = (float)pictureBox.Width / colorWidth;
-            float scaleY = (float)pictureBox.Height / colorHeight;
-
-            // Apply scaling
-            int x1 = (int)(point1.X * scaleX);
-            int y1 = (int)(point1.Y * scaleY);
-            int x2 = (int)(point2.X * scaleX);
-            int y2 = (int)(point2.Y * scaleY);
-
-            // Draw the line
-            g.DrawLine(Pens.Green, x1, y1, x2, y2);
-        }
-    }
     #endregion
     private void Sensor_SkeletonFrameReady(object sender, SkeletonFrameReadyEventArgs e)
     {
@@ -472,4 +441,165 @@ public class KinectControlForm : Form
             }
         }
     }
+
+    private void DrawBone(Graphics g, JointCollection joints, JointType jointType1, JointType jointType2, Func<SkeletonPoint, PointF> mapPoint, float frameWidth, float frameHeight)
+    {
+        Joint joint1 = joints[jointType1];
+        Joint joint2 = joints[jointType2];
+
+        if (joint1.TrackingState != JointTrackingState.Tracked || joint2.TrackingState != JointTrackingState.Tracked)
+            return;
+
+        PointF p1 = mapPoint(joint1.Position);
+        PointF p2 = mapPoint(joint2.Position);
+
+        float scaleX = (float)pictureBox.Width / frameWidth;
+        float scaleY = (float)pictureBox.Height / frameHeight;
+
+        float x1 = p1.X * scaleX;
+        float y1 = p1.Y * scaleY;
+        float x2 = p2.X * scaleX;
+        float y2 = p2.Y * scaleY;
+
+        g.DrawLine(Pens.Green, x1, y1, x2, y2);
+    }
+    
+    #region EXPERIMENTAL 3D Model Rendering
+    private void Setup3DEnvironment()
+    {
+        glControl.MakeCurrent();
+        GL.Enable(EnableCap.DepthTest);
+        GL.Enable(EnableCap.Lighting);
+        GL.Enable(EnableCap.Light0);
+    }
+
+    private void Application_Idle(object sender, EventArgs e)
+    {
+        Render3DScene();
+    }
+
+    private void Render3DScene()
+    {
+        if (!show3D) return;
+
+        GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+
+        // Set up viewport and matrices
+        GL.Viewport(0, 0, glControl.Width, glControl.Height);
+        OpenTK.Matrix4 perspective = OpenTK.Matrix4.CreatePerspectiveFieldOfView(
+            MathHelper.PiOver4,
+            (float)glControl.Width / glControl.Height,
+            0.1f,
+            100f);
+        OpenTK.Matrix4 lookAt = OpenTK.Matrix4.LookAt(cameraPosition, Vector3.Zero, Vector3.UnitY);
+
+        GL.MatrixMode(MatrixMode.Projection);
+        GL.LoadMatrix(ref perspective);
+        GL.MatrixMode(MatrixMode.Modelview);
+        GL.LoadMatrix(ref lookAt);
+
+        // Draw your 3D model here (example: rotating cube)
+        DrawCube();
+
+        glControl.SwapBuffers();
+        rotationAngle += 0.5f;
+        DrawCube();
+        DrawSkeletonIn3D(); // Add this line
+
+        glControl.SwapBuffers();
+    }
+
+    private void DrawCube()
+    {
+        GL.Begin(PrimitiveType.Quads);
+
+        GL.Color3(Color.Red);
+        // Front face
+        GL.Vertex3(-1.0f, -1.0f, 1.0f);
+        GL.Vertex3(1.0f, -1.0f, 1.0f);
+        GL.Vertex3(1.0f, 1.0f, 1.0f);
+        GL.Vertex3(-1.0f, 1.0f, 1.0f);
+
+        // Add other faces...
+
+        GL.End();
+    }
+
+    private void DrawSkeletonIn3D()
+    {
+        if (skeletons == null) return;
+
+        foreach (Skeleton skeleton in skeletons)
+        {
+            if (skeleton.TrackingState == SkeletonTrackingState.Tracked)
+            {
+                foreach (Joint joint in skeleton.Joints)
+                {
+                    if (joint.TrackingState == JointTrackingState.Tracked)
+                    {
+                        Vector3 jointPosition = KinectToWorld(joint.Position);
+                        DrawJointSphere(jointPosition);
+                    }
+                }
+
+                // Draw bones between joints
+                DrawBonesBetweenJoints(skeleton);
+            }
+        }
+    }
+    private void DrawBonesBetweenJoints(Skeleton skeleton)
+    {
+        Graphics g = glControl.CreateGraphics();
+        // kati 8a ginei edw
+    }
+
+    private Vector3 KinectToWorld(SkeletonPoint position)
+    {
+        // Convert Kinect coordinates to 3D world coordinates
+        return new Vector3(
+            position.X * 10,  // Scale factor
+            position.Y * 10,
+            position.Z * 10
+        );
+    }
+
+    private void DrawJointSphere(Vector3 position)
+    {
+        GL.PushMatrix();
+        GL.Translate(position);
+        GL.Color3(Color.Blue);
+        Sphere(0.1f, 20, 20); // Implement sphere drawing
+        GL.PopMatrix();
+    }
+
+    public static void Sphere(float radius, int slices, int stacks)
+    {
+        for (int i = 0; i <= stacks; i++)
+        {
+            double lat0 = Math.PI * (-0.5 + (double)(i - 1) / stacks);
+            double z0 = Math.Sin(lat0) * radius;
+            double zr0 = Math.Cos(lat0);
+
+            double lat1 = Math.PI * (-0.5 + (double)i / stacks);
+            double z1 = Math.Sin(lat1) * radius;
+            double zr1 = Math.Cos(lat1);
+
+            GL.Begin(PrimitiveType.QuadStrip);
+            for (int j = 0; j <= slices; j++)
+            {
+                double lng = 2 * Math.PI * (double)(j - 1) / slices;
+                double x = Math.Cos(lng);
+                double y = Math.Sin(lng);
+
+                GL.Normal3(x * zr0, y * zr0, z0);
+                GL.Vertex3(x * zr0 * radius, y * zr0 * radius, z0);
+
+                GL.Normal3(x * zr1, y * zr1, z1);
+                GL.Vertex3(x * zr1 * radius, y * zr1 * radius, z1);
+            }
+            GL.End();
+        }
+    }
+
+    #endregion
 }

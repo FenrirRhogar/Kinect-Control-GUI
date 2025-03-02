@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("KinectApp")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f2055d7249b5179599ff75668c42ddaea2bdd22e")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ae74e7ef34adec27e5ec735e00d059ba79dd0f8b")]
 [assembly: System.Reflection.AssemblyProductAttribute("KinectApp")]
 [assembly: System.Reflection.AssemblyTitleAttribute("KinectApp")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
