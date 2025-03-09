@@ -1,64 +1,69 @@
-# **Kinect Control UI**
+# Kinect Control UI
 
-This project is a **C# application** designed to create a **graphical user interface (GUI)** for controlling the **Xbox 360 Kinect sensor**. The application enables users to interact with and adjust the Kinect sensor, including features like camera tilt, infrared control, and real-time streaming of color, depth, and skeleton frames.
+This project is a simple **C# application** (net4.0) designed to create a **graphical user interface (GUI)** for controlling the **Xbox 360 Kinect sensor**. The application allows users to interact with and adjust the Kinect sensor, including features like camera tilt, infrared control, and real-time streaming of color, depth, and skeleton frames.
 
-## **Features**
+## Features
 
 - **Kinect Sensor Initialization**: Automatically detects and starts the Kinect sensor.
 - **Camera Tilt Control**: Adjust the Kinect sensor's tilt angle within the range of -27 to 27 degrees.
-- **Infrared Emitter Control**: Option to turn off the Kinect’s infrared emitter for specific use cases.
 - **Depth, Color, and Skeleton Frame Streaming**: Display real-time video feeds and skeleton tracking from the Kinect sensor.
 - **Event Handling**: Automatically triggers actions when new frames are available for depth, color, and skeleton streams.
-- **Auto Reconnect**: The application supports automatic reconnection if the Kinect sensor is disconnected.
 
-## **Project Structure**
+## Project Structure
 
-- **`Program.cs`**: The main C# file that handles the core Kinect sensor functionality, such as initializing the sensor, processing frames, and adjusting the sensor's settings.
-- **`KinectSettings.json`**: Configuration file for setting initial parameters like the tilt angle, skeleton tracking mode, and stream resolution.
-- **`KinectControlUI.cs`**: UI layer (in development) that will allow users to interact with the Kinect sensor via a graphical interface.
-- **`KinectControlLibrary.cs`**: A class library containing the Kinect API commands used for controlling the sensor.
+The project is organized into the following directories:
 
-## **Configuration**
+- **Models**: Contains the C# classes that define the data models used in the application.
+    - `AudioSettings.cs`
+    - `DeviceConnection.cs`
+    - `KinectSettings.cs`
+    - `SkeletonTracking.cs`
+    - `SmoothingParameters.cs`
+    - `StreamSettings.cs`
 
-The `KinectSettings.json` file is used to define the initial configuration for the Kinect sensor. Below is an example configuration:
+- **Views**: Contains the C# classes that define the user interface and handle user interactions.
+    - `KinectControlForm.cs`
+    - `PointExtensions.cs`
 
-```json
-{
-    "kinectSettings": {
-        "sensorIndex": 0,
-        "skeletonTracking": {
-            "enabled": true,
-            "mode": "default",
-            "trackingMode": "fullBody",
-            "smoothingParameters": {
-                "smoothing": 0.5,
-                "correction": 0.5,
-                "prediction": 0.5,
-                "jitterRadius": 0.05,
-                "maxDeviationRadius": 0.05
-            }
-        },
-        "depthStream": {
-            "enabled": true,
-            "mode": "default",
-            "resolution": "640x480",
-            "frameRate": 30
-        },
-        "colorStream": {
-            "enabled": true,
-            "resolution": "640x480",
-            "frameRate": 30,
-            "format": "RGB"
-        },
-        "audio": {
-            "enabled": true,
-            "beamAngleMode": "automatic"
-        },
-        "tiltAngle": 0,
-        "nearMode": false,
-        "deviceConnection": {
-            "autoReconnect": true,
-            "reconnectInterval": 5000
-        }
-    }
-}
+- **bin**: Contains the compiled binaries and dependencies.
+    - `Debug/`
+        - `net4.0/`
+            - `kinect_config.json`
+            - `KinectApp.exe`
+            - `KinectApp.exe.config`
+            - `KinectApp.pdb`
+            - `Microsoft.Kinect.dll`
+            - `Newtonsoft.Json.dll`
+    - `Release/`
+        - `net4.0/`
+
+## Getting Started
+
+1. **Clone the repository**:
+    ```sh
+    git clone https://github.com/FenrirRhogar/Kinect-SDK-Control-GUI.git
+    ```
+
+2. **Open the solution** in Visual Studio.
+
+3. **Build the solution** to restore the necessary NuGet packages and compile the project.
+
+4. **Run the application**. Ensure that the Kinect sensor is connected to your computer.
+
+## Configuration
+
+The application uses a JSON configuration file (`kinect_config.json`) located in the `bin/Debug/net4.0/` directory.
+
+## Usage
+
+- **Tilt Control**: Adjust the tilt angle of the Kinect sensor through the terminal.
+- **View Modes**: Use the UI to switch between color, depth, and skeleton views using the dropdown menus and buttons.
+- **Exit**: Click the "Exit" button to close the application.
+
+## Contributing
+
+Contributions are welcome! Please fork the repository and submit pull requests for any enhancements or bug fixes.
+
+## License
+
+This project is licensed under the MIT License. See the `LICENSE` file for more details.
