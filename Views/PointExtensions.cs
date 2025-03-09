@@ -6,9 +6,6 @@ using System.Threading;
 using System.Windows.Forms;
 using Microsoft.Kinect;
 using Newtonsoft.Json;
-using OpenTK;
-using OpenTK.Graphics;
-using OpenTK.Graphics.OpenGL;
 
 public static class PointExtensions
     {

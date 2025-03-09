@@ -1,71 +1,93 @@
 using System;
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.IO;
-using System.Threading;
 using System.Windows.Forms;
 using Microsoft.Kinect;
-using Newtonsoft.Json;
-using OpenTK;
-using OpenTK.Graphics;
-using OpenTK.Graphics.OpenGL;
 
 public class KinectControlForm : Form
 {
     private PictureBox pictureBox;
     private KinectSensor sensor;
-    private Skeleton[] skeletons; // To store skeleton data
-    //private Button toggleSkeletonButton; // New button
-    private ComboBox colorFormatBox; // New combo box
-    private ComboBox depthRes; // +++ New combo box for depth format
-    private Button toggleSkeletonButton; // New button
-    private bool showSkeleton = true; // Flag to control skeleton visibility
-    private ComboBox viewModeBox; // +++ New combo box for view selection
-    private byte[] depthPixels; // +++ For depth frame processing
-    private bool showDepth = false; // +++ Depth view flag
-    private GLControl glControl;
-    private bool show3D = false;
-    private float rotationAngle = 0.0f;
-    private Vector3 cameraPosition = new Vector3(0, 0, 5);
+    private Skeleton[] skeletons;
+    private ComboBox colorRes;
+    private ComboBox depthRes;
+    private Button exitButton;
+    private Button toggleSkeletonButton;
+    private bool showSkeleton = true;
+    private ComboBox viewModeBox;
+    private byte[] depthPixels;
+    private bool showDepth = false;
+    private bool showColor = true;
 
     public KinectControlForm()
     {
+        #region UI Initialization
         // Initialize the form and PictureBox
         this.Text = "Kinect Camera and Skeleton Viewer";
         this.Width = 640;
         this.Height = 480;
         pictureBox = new PictureBox();
-        pictureBox.Dock = DockStyle.Fill; // This ensures the PictureBox always fills the form
+        pictureBox.Dock = DockStyle.Fill;
         this.Controls.Add(pictureBox);
+        this.FormBorderStyle = FormBorderStyle.FixedSingle;
+        this.MaximizeBox = false;
+        //this.Resize += KinectControlForm_Resize;
 
-        this.Resize += KinectControlForm_Resize; // Handle form resize
+        // Initialize view mode dropdown list
+        viewModeBox = new ComboBox();
+        viewModeBox.Items.AddRange(new object[] { "Color View", "Depth View" });
+        viewModeBox.SelectedIndex = 0;
+        viewModeBox.Location = new Point(10, 10);
+        viewModeBox.Size = new Size(120, 30);
+        viewModeBox.DropDownStyle = ComboBoxStyle.DropDownList;
+        viewModeBox.SelectedIndexChanged += ViewModeBox_SelectedIndexChanged;
+        this.Controls.Add(viewModeBox);
+        viewModeBox.BringToFront();
 
-        // Initialize the color combo box
-        colorFormatBox = new ComboBox();
-        colorFormatBox.Name = "colorRes";
-        colorFormatBox.Location = new Point(10, 10);
-        colorFormatBox.Size = new Size(180, 30);
-        colorFormatBox.DropDownStyle = ComboBoxStyle.DropDownList;
-        this.Controls.Add(colorFormatBox);
-        colorFormatBox.BringToFront(); // Ensure combo box is on top
-        foreach (ColorImageFormat ColorImageFormat in Enum.GetValues(typeof(ColorImageFormat)))
+        // Initialize the color view dropdown list
+        colorRes = new ComboBox();
+        colorRes.Name = "colorRes";
+        colorRes.Location = new Point(140, 10);
+        colorRes.Size = new Size(180, 30);
+        colorRes.DropDownStyle = ComboBoxStyle.DropDownList;
+        this.Controls.Add(colorRes);
+        colorRes.BringToFront();
+        foreach (ColorImageFormat imageFormat in Enum.GetValues(typeof(ColorImageFormat)))
         {
-            if (ColorImageFormat != ColorImageFormat.Undefined)
+            if (imageFormat != ColorImageFormat.Undefined)
             {
-                colorFormatBox.Items.Add(ColorImageFormat);
+                colorRes.Items.Add(imageFormat);
             }
         }
-        colorFormatBox.SelectedIndexChanged += ColorResolution_SelectedIndexChanged;
+        colorRes.SelectedText = colorRes.Items[0].ToString();
+        colorRes.SelectedIndexChanged += ColorResolution_SelectedIndexChanged;
 
-        // Initialize the depth combo box
+        exitButton = new Button();
+        exitButton.Text = "Exit";
+        exitButton.Location = new Point(this.Width - 120, 10);
+        exitButton.Size = new Size(100, 30);
+        this.Controls.Add(exitButton);
+        exitButton.Click += (sender, e) => { 
+            this.Close(); 
+            sensor.ElevationAngle = 0;
+            sensor.Stop();
+            Console.WriteLine("Kinect sensor stopped successfully.");
+            Environment.Exit(0);
+        };
+        exitButton.BringToFront();
+
+        // Other resolutions don't work well with the depth view
+        /*
+        // Initialize the depth view dropdown list
         depthRes = new ComboBox();
         depthRes.Name = "depthRes";
-        depthRes.Location = new Point(10, 10);
+        depthRes.Location = new Point(330, 10);
         depthRes.Size = new Size(180, 30);
         depthRes.DropDownStyle = ComboBoxStyle.DropDownList;
         this.Controls.Add(depthRes);
-        depthRes.Visible = false; // Hide by default
-        depthRes.BringToFront(); // Ensure combo box is on top
+        depthRes.Visible = false;
+        depthRes.BringToFront();
+        depthRes.Items.Add(DepthImageFormat.Resolution640x480Fps30);
         foreach (DepthImageFormat depthFormat in Enum.GetValues(typeof(DepthImageFormat)))
         {
             if (depthFormat != DepthImageFormat.Undefined)
@@ -74,82 +96,47 @@ public class KinectControlForm : Form
             }
         }
         depthRes.SelectedIndexChanged += DepthResolution_SelectedIndexChanged;
+        */
 
-        // Initialize the button
+        // Initialize Show/Hide Skeleton button
         toggleSkeletonButton = new Button();
         toggleSkeletonButton.Text = "Hide Skeleton";
-        toggleSkeletonButton.Location = new Point(200, 10);
+        toggleSkeletonButton.Location = new Point(330, 10);
         toggleSkeletonButton.Size = new Size(120, 30);
         this.Controls.Add(toggleSkeletonButton);
         toggleSkeletonButton.Click += ToggleSkeletonButton_Click;
-        toggleSkeletonButton.BringToFront(); // Ensure button is on top
+        toggleSkeletonButton.BringToFront();
 
-
-
-        // +++ Add view mode selector
-        viewModeBox = new ComboBox();
-        viewModeBox.Items.AddRange(new object[] { "Color View", "Depth View", "3D Model View" });
-        viewModeBox.SelectedIndex = 0;
-        viewModeBox.Location = new Point(330, 10);
-        viewModeBox.Size = new Size(120, 30);
-        viewModeBox.DropDownStyle = ComboBoxStyle.DropDownList;
-        viewModeBox.SelectedIndexChanged += ViewModeBox_SelectedIndexChanged;
-        this.Controls.Add(viewModeBox);
-        viewModeBox.BringToFront();
-
-        // Initialize the GLControl
-        glControl = new GLControl();
-        glControl.Location = pictureBox.Location;
-        glControl.Size = pictureBox.Size;
-        glControl.Visible = false;
-        this.Controls.Add(glControl);
-    }
-
-    protected override void OnFormClosed(FormClosedEventArgs e)
-    {
-        // Stop the Kinect sensor when the form is closed
-        if (sensor != null && sensor.IsRunning)
-        {
-            sensor.Stop();
-        }
-        base.OnFormClosed(e);
+        
+        #endregion
     }
 
     #region Actions
+    // Event handlers for UI elements
     private void ViewModeBox_SelectedIndexChanged(object sender, EventArgs e)
     {
+        showColor = viewModeBox.SelectedIndex == 0;
         showDepth = viewModeBox.SelectedIndex == 1;
-        show3D = viewModeBox.SelectedIndex == 2;
 
-        pictureBox.Visible = !show3D;
-        glControl.Visible = show3D;
-        if (show3D)
+        if (showColor)
         {
-            Setup3DEnvironment();
-            Application.Idle += Application_Idle; // Continuous rendering
+            sensor.DepthStream.Disable();
+            sensor.ColorStream.Enable(ColorImageFormat.RgbResolution640x480Fps30);
+            int colorWidth = sensor.ColorStream.FrameWidth;
+            int colorHeight = sensor.ColorStream.FrameHeight;
+            depthPixels = new byte[colorWidth * colorHeight * 3]; // 3 bytes per pixel (RGB)
+            // depthRes.Visible = false;
+            colorRes.Visible = true;
         }
-        else
+        else if (showDepth)
         {
-            Application.Idle -= Application_Idle;
-        }
-        if (showDepth)
-        {
-            // Enable the depth stream
+            sensor.ColorStream.Disable();
             sensor.DepthStream.Enable(DepthImageFormat.Resolution640x480Fps30);
-
-            // Initialize the depthPixels array based on the depth stream resolution
             int depthWidth = sensor.DepthStream.FrameWidth;
             int depthHeight = sensor.DepthStream.FrameHeight;
             depthPixels = new byte[depthWidth * depthHeight * 3]; // 3 bytes per pixel (RGB)
-            depthRes.Visible = true; // Show the depth format combo box
-            colorFormatBox.Visible = false; // Hide the color format combo box
-        }
-        else
-        {
-            // Disable the depth stream
-            sensor.DepthStream.Disable();
-            depthRes.Visible = false; // Hide the depth format combo box
-            colorFormatBox.Visible = true; // Show the color format combo box
+            // depthRes.Visible = true;
+            colorRes.Visible = false;
         }
     }
 
@@ -160,21 +147,20 @@ public class KinectControlForm : Form
             DepthImageFormat newFormat = (DepthImageFormat)depthRes.SelectedItem;
             sensor.DepthStream.Enable(newFormat);
 
-            // Set PictureBox to maintain aspect ratio
             pictureBox.SizeMode = PictureBoxSizeMode.Zoom;
 
-            // Update form size based on new resolution
             this.ClientSize = new Size(
-                sensor.ColorStream.FrameWidth,
-                sensor.ColorStream.FrameHeight);
+                sensor.DepthStream.FrameWidth,
+                sensor.DepthStream.FrameHeight);
+            
         }
     }
 
     private void ColorResolution_SelectedIndexChanged(object sender, EventArgs e)
     {
-        if (colorFormatBox.SelectedItem != null && sensor != null)
+        if (colorRes.SelectedItem != null && sensor != null)
         {
-            ColorImageFormat newFormat = (ColorImageFormat)colorFormatBox.SelectedItem;
+            ColorImageFormat newFormat = (ColorImageFormat)colorRes.SelectedItem;
             sensor.ColorStream.Enable(newFormat);
 
             // Set PictureBox to maintain aspect ratio
@@ -184,6 +170,7 @@ public class KinectControlForm : Form
             this.ClientSize = new Size(
                 sensor.ColorStream.FrameWidth,
                 sensor.ColorStream.FrameHeight);
+            exitButton.Location = new Point(this.Width - 120, 10);
         }
     }
 
@@ -203,35 +190,34 @@ public class KinectControlForm : Form
     }
     #endregion
 
+    // Start the Kinect sensor
     public void StartKinect(KinectSensor sensor)
     {
         this.sensor = sensor;
-
-        // Enable color stream
         sensor.ColorStream.Enable(ColorImageFormat.RgbResolution1280x960Fps12);
-
-        // Enable skeleton tracking
         sensor.SkeletonStream.Enable();
-
-        // Subscribe to both color frame and skeleton frame events
+        sensor.DepthStream.Enable(DepthImageFormat.Resolution640x480Fps30);
+        depthPixels = new byte[sensor.DepthStream.FrameWidth * sensor.DepthStream.FrameHeight * 3];
         sensor.ColorFrameReady += Sensor_ColorFrameReady;
         sensor.SkeletonFrameReady += Sensor_SkeletonFrameReady;
-        sensor.DepthFrameReady += Sensor_DepthFrameReady; // +++ New handler
-
-
-        // Start the Kinect sensor
+        sensor.DepthFrameReady += Sensor_DepthFrameReady;
         sensor.Start();
     }
 
     #region Depth Frame Processing
+    // Event handler for depth frame ready event
     private void Sensor_DepthFrameReady(object sender, DepthImageFrameReadyEventArgs e)
     {
-        if (!showDepth || depthPixels == null) return; // Ensure depthPixels is initialized
+        if (!showDepth || depthPixels == null) return;
 
         using (DepthImageFrame depthFrame = e.OpenDepthImageFrame())
         {
-            if (depthFrame != null)
+            if (depthFrame != null && depthPixels.Length == depthFrame.Width * depthFrame.Height * 3)
             {
+                if (depthPixels.Length != depthFrame.Width * depthFrame.Height * 3)
+                {
+                    depthPixels = new byte[depthFrame.Width * depthFrame.Height * 3];
+                }
                 // Convert depth to RGB
                 short[] depthData = new short[depthFrame.PixelDataLength];
                 depthFrame.CopyPixelDataTo(depthData);
@@ -277,6 +263,7 @@ public class KinectControlForm : Form
         }
     }
 
+    // Draw the skeleton on top of the depth image
     private void DrawDepthSkeleton(Graphics g, DepthImageFrame depthFrame)
     {
         if (skeletons == null) return;
@@ -285,7 +272,6 @@ public class KinectControlForm : Form
         {
             if (skeleton.TrackingState == SkeletonTrackingState.Tracked)
             {
-                // Draw joints
                 foreach (Joint joint in skeleton.Joints)
                 {
                     if (joint.TrackingState == JointTrackingState.Tracked)
@@ -331,6 +317,7 @@ public class KinectControlForm : Form
     #endregion
 
     #region Color Frame Processing
+    // Event handler for color frame ready event
     private void Sensor_ColorFrameReady(object sender, ColorImageFrameReadyEventArgs e)
     {
         if (showDepth) return;
@@ -358,7 +345,6 @@ public class KinectControlForm : Form
 
                 if (showSkeleton)
                 {
-                    // Now draw the skeleton on top of the video feed
                     using (Graphics g = Graphics.FromImage(bitmap))
                     {
                         DrawColorSkeleton(g);
@@ -370,12 +356,12 @@ public class KinectControlForm : Form
         }
     }
 
+    // Draw the skeleton on top of the color image
     private void DrawColorSkeleton(Graphics g)
 
     {
         if (skeletons == null) return;
 
-        // Get current color stream format details
         ColorImageFormat currentFormat = sensor.ColorStream.Format;
         int colorWidth = sensor.ColorStream.FrameWidth;
         int colorHeight = sensor.ColorStream.FrameHeight;
@@ -388,21 +374,17 @@ public class KinectControlForm : Form
                 {
                     if (joint.TrackingState == JointTrackingState.Tracked)
                     {
-                        // Map using ACTUAL color stream format
                         ColorImagePoint point = sensor.CoordinateMapper.MapSkeletonPointToColorPoint(
                             joint.Position,
                             currentFormat);
 
-                        // Calculate scaling factors based on actual image dimensions and display size
                         float scaleX = (float)pictureBox.Width / colorWidth;
                         float scaleY = (float)pictureBox.Height / colorHeight;
 
-                        // Apply scaling
                         int x = (int)(point.X * scaleX);
                         int y = (int)(point.Y * scaleY);
 
-                        // Draw the joint
-                        g.FillEllipse(Brushes.Red, x - 5, y - 5, 10, 10);
+                        g.FillEllipse(Brushes.Red, x - 5, y - 5, 10, 10); // Draw joint as a red circle
                     }
                 }
 
@@ -430,6 +412,7 @@ public class KinectControlForm : Form
     }
 
     #endregion
+    // Event handler for skeleton frame ready event
     private void Sensor_SkeletonFrameReady(object sender, SkeletonFrameReadyEventArgs e)
     {
         using (SkeletonFrame skeletonFrame = e.OpenSkeletonFrame())
@@ -442,6 +425,7 @@ public class KinectControlForm : Form
         }
     }
 
+    // Draw a bone between two joints
     private void DrawBone(Graphics g, JointCollection joints, JointType jointType1, JointType jointType2, Func<SkeletonPoint, PointF> mapPoint, float frameWidth, float frameHeight)
     {
         Joint joint1 = joints[jointType1];
@@ -463,143 +447,5 @@ public class KinectControlForm : Form
 
         g.DrawLine(Pens.Green, x1, y1, x2, y2);
     }
-    
-    #region EXPERIMENTAL 3D Model Rendering
-    private void Setup3DEnvironment()
-    {
-        glControl.MakeCurrent();
-        GL.Enable(EnableCap.DepthTest);
-        GL.Enable(EnableCap.Lighting);
-        GL.Enable(EnableCap.Light0);
-    }
 
-    private void Application_Idle(object sender, EventArgs e)
-    {
-        Render3DScene();
-    }
-
-    private void Render3DScene()
-    {
-        if (!show3D) return;
-
-        GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-
-        // Set up viewport and matrices
-        GL.Viewport(0, 0, glControl.Width, glControl.Height);
-        OpenTK.Matrix4 perspective = OpenTK.Matrix4.CreatePerspectiveFieldOfView(
-            MathHelper.PiOver4,
-            (float)glControl.Width / glControl.Height,
-            0.1f,
-            100f);
-        OpenTK.Matrix4 lookAt = OpenTK.Matrix4.LookAt(cameraPosition, Vector3.Zero, Vector3.UnitY);
-
-        GL.MatrixMode(MatrixMode.Projection);
-        GL.LoadMatrix(ref perspective);
-        GL.MatrixMode(MatrixMode.Modelview);
-        GL.LoadMatrix(ref lookAt);
-
-        // Draw your 3D model here (example: rotating cube)
-        DrawCube();
-
-        glControl.SwapBuffers();
-        rotationAngle += 0.5f;
-        DrawCube();
-        DrawSkeletonIn3D(); // Add this line
-
-        glControl.SwapBuffers();
-    }
-
-    private void DrawCube()
-    {
-        GL.Begin(PrimitiveType.Quads);
-
-        GL.Color3(Color.Red);
-        // Front face
-        GL.Vertex3(-1.0f, -1.0f, 1.0f);
-        GL.Vertex3(1.0f, -1.0f, 1.0f);
-        GL.Vertex3(1.0f, 1.0f, 1.0f);
-        GL.Vertex3(-1.0f, 1.0f, 1.0f);
-
-        // Add other faces...
-
-        GL.End();
-    }
-
-    private void DrawSkeletonIn3D()
-    {
-        if (skeletons == null) return;
-
-        foreach (Skeleton skeleton in skeletons)
-        {
-            if (skeleton.TrackingState == SkeletonTrackingState.Tracked)
-            {
-                foreach (Joint joint in skeleton.Joints)
-                {
-                    if (joint.TrackingState == JointTrackingState.Tracked)
-                    {
-                        Vector3 jointPosition = KinectToWorld(joint.Position);
-                        DrawJointSphere(jointPosition);
-                    }
-                }
-
-                // Draw bones between joints
-                DrawBonesBetweenJoints(skeleton);
-            }
-        }
-    }
-    private void DrawBonesBetweenJoints(Skeleton skeleton)
-    {
-        Graphics g = glControl.CreateGraphics();
-        // kati 8a ginei edw
-    }
-
-    private Vector3 KinectToWorld(SkeletonPoint position)
-    {
-        // Convert Kinect coordinates to 3D world coordinates
-        return new Vector3(
-            position.X * 10,  // Scale factor
-            position.Y * 10,
-            position.Z * 10
-        );
-    }
-
-    private void DrawJointSphere(Vector3 position)
-    {
-        GL.PushMatrix();
-        GL.Translate(position);
-        GL.Color3(Color.Blue);
-        Sphere(0.1f, 20, 20); // Implement sphere drawing
-        GL.PopMatrix();
-    }
-
-    public static void Sphere(float radius, int slices, int stacks)
-    {
-        for (int i = 0; i <= stacks; i++)
-        {
-            double lat0 = Math.PI * (-0.5 + (double)(i - 1) / stacks);
-            double z0 = Math.Sin(lat0) * radius;
-            double zr0 = Math.Cos(lat0);
-
-            double lat1 = Math.PI * (-0.5 + (double)i / stacks);
-            double z1 = Math.Sin(lat1) * radius;
-            double zr1 = Math.Cos(lat1);
-
-            GL.Begin(PrimitiveType.QuadStrip);
-            for (int j = 0; j <= slices; j++)
-            {
-                double lng = 2 * Math.PI * (double)(j - 1) / slices;
-                double x = Math.Cos(lng);
-                double y = Math.Sin(lng);
-
-                GL.Normal3(x * zr0, y * zr0, z0);
-                GL.Vertex3(x * zr0 * radius, y * zr0 * radius, z0);
-
-                GL.Normal3(x * zr1, y * zr1, z1);
-                GL.Vertex3(x * zr1 * radius, y * zr1 * radius, z1);
-            }
-            GL.End();
-        }
-    }
-
-    #endregion
 }

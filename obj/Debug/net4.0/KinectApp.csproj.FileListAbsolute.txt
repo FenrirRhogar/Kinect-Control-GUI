@@ -26,5 +26,4 @@ C:\Users\John\Documents\GitHub\Kinect-SDK-Control-GUI\obj\Debug\net4.0\KinectApp
 C:\Users\John\Documents\GitHub\Kinect-SDK-Control-GUI\obj\Debug\net4.0\KinectApp.csproj.Up2Date
 C:\Users\John\Documents\GitHub\Kinect-SDK-Control-GUI\obj\Debug\net4.0\KinectApp.exe
 C:\Users\John\Documents\GitHub\Kinect-SDK-Control-GUI\obj\Debug\net4.0\KinectApp.pdb
-c:\Users\John\Documents\GitHub\Kinect-SDK-Control-GUI\bin\Debug\net4.0\OpenTK.dll
-c:\Users\John\Documents\GitHub\Kinect-SDK-Control-GUI\bin\Debug\net4.0\OpenTK.GLControl.dll
+C:\Users\John\Documents\GitHub\Kinect-SDK-Control-GUI\bin\Debug\net4.0\System.Windows.Forms.dll

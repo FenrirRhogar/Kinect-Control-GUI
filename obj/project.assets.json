@@ -29,38 +29,9 @@
             "related": ".xml"
           }
         }
-      },
-      "OpenTK/3.1.0": {
-        "type": "package",
-        "compile": {
-          "lib/net20/OpenTK.dll": {
-            "related": ".pdb;.xml"
-          }
-        },
-        "runtime": {
-          "lib/net20/OpenTK.dll": {
-            "related": ".pdb;.xml"
-          }
-        }
-      },
-      "OpenTK.GLControl/3.1.0": {
-        "type": "package",
-        "dependencies": {
-          "OpenTK": "3.1.0"
-        },
-        "compile": {
-          "lib/net20/OpenTK.GLControl.dll": {
-            "related": ".pdb;.xml"
-          }
-        },
-        "runtime": {
-          "lib/net20/OpenTK.GLControl.dll": {
-            "related": ".pdb;.xml"
-          }
-        }
       }
     },
-    ".NETFramework,Version=v4.0/win7-x86": {
+    ".NETFramework,Version=v4.0/win-x86": {
       "Microsoft.NETFramework.ReferenceAssemblies/1.0.3": {
         "type": "package",
         "dependencies": {
@@ -86,35 +57,6 @@
         "runtime": {
           "lib/net40/Newtonsoft.Json.dll": {
             "related": ".xml"
-          }
-        }
-      },
-      "OpenTK/3.1.0": {
-        "type": "package",
-        "compile": {
-          "lib/net20/OpenTK.dll": {
-            "related": ".pdb;.xml"
-          }
-        },
-        "runtime": {
-          "lib/net20/OpenTK.dll": {
-            "related": ".pdb;.xml"
-          }
-        }
-      },
-      "OpenTK.GLControl/3.1.0": {
-        "type": "package",
-        "dependencies": {
-          "OpenTK": "3.1.0"
-        },
-        "compile": {
-          "lib/net20/OpenTK.GLControl.dll": {
-            "related": ".pdb;.xml"
-          }
-        },
-        "runtime": {
-          "lib/net20/OpenTK.GLControl.dll": {
-            "related": ".pdb;.xml"
           }
         }
       }
@@ -584,44 +526,13 @@
         "newtonsoft.json.nuspec",
         "packageIcon.png"
       ]
-    },
-    "OpenTK/3.1.0": {
-      "sha512": "xoP5kb81lRSY5RzbntaFA9yXK+aGF5SLShhns55MyZtxtNafIxRH5KvRTFss/N653brTzE+AfepjKsbMexYlBQ==",
-      "type": "package",
-      "path": "opentk/3.1.0",
-      "files": [
-        ".nupkg.metadata",
-        ".signature.p7s",
-        "content/OpenTK.dll.config",
-        "lib/net20/OpenTK.dll",
-        "lib/net20/OpenTK.pdb",
-        "lib/net20/OpenTK.xml",
-        "opentk.3.1.0.nupkg.sha512",
-        "opentk.nuspec"
-      ]
-    },
-    "OpenTK.GLControl/3.1.0": {
-      "sha512": "BjDzF+MhJd2LaZYzkXmgkzzXgHAko/Iur4rGy6+DPdZA1Jcc0X6jXZ6QsUsjlLRNzgevO7uAj2h1TqX7sguaYg==",
-      "type": "package",
-      "path": "opentk.glcontrol/3.1.0",
-      "files": [
-        ".nupkg.metadata",
-        ".signature.p7s",
-        "lib/net20/OpenTK.GLControl.dll",
-        "lib/net20/OpenTK.GLControl.pdb",
-        "lib/net20/OpenTK.GLControl.xml",
-        "opentk.glcontrol.3.1.0.nupkg.sha512",
-        "opentk.glcontrol.nuspec"
-      ]
     }
   },
   "projectFileDependencyGroups": {
     ".NETFramework,Version=v4.0": [
       "Microsoft.NETFramework.ReferenceAssemblies >= 1.0.3",
       "Microsoft.Windows.Compatibility >= 8.0.8",
-      "Newtonsoft.Json >= 13.0.3",
-      "OpenTK >= 3.1.0",
-      "OpenTK.GLControl >= 3.1.0"
+      "Newtonsoft.Json >= 13.0.3"
     ]
   },
   "packageFolders": {
@@ -642,12 +553,14 @@
       ],
       "configFilePaths": [
         "C:\\Users\\John\\AppData\\Roaming\\NuGet\\NuGet.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config"
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
         "net4.0"
       ],
       "sources": {
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
@@ -665,7 +578,8 @@
         "enableAudit": "true",
         "auditLevel": "low",
         "auditMode": "direct"
-      }
+      },
+      "SdkAnalysisLevel": "9.0.200"
     },
     "frameworks": {
       "net40": {
@@ -684,21 +598,13 @@
           "Newtonsoft.Json": {
             "target": "Package",
             "version": "[13.0.3, )"
-          },
-          "OpenTK": {
-            "target": "Package",
-            "version": "[3.1.0, )"
-          },
-          "OpenTK.GLControl": {
-            "target": "Package",
-            "version": "[3.1.0, )"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.404\\RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.200\\RuntimeIdentifierGraph.json"
       }
     },
     "runtimes": {
-      "win7-x86": {
+      "win-x86": {
         "#import": []
       }
     }
