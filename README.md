@@ -25,23 +25,15 @@ The project is organized into the following directories:
     - `KinectControlForm.cs`
     - `PointExtensions.cs`
 
-- **bin**: Contains the compiled binaries and dependencies.
-    - `Debug/`
-        - `net4.0/`
-            - `kinect_config.json`
-            - `KinectApp.exe`
-            - `KinectApp.exe.config`
-            - `KinectApp.pdb`
-            - `Microsoft.Kinect.dll`
-            - `Newtonsoft.Json.dll`
-    - `Release/`
-        - `net4.0/`
+- **plugins**: Kinect SDK and Windows Forms assemblies referenced by the project.
+
+- `kinect_config.json`: sensor settings, copied next to the executable on build.
 
 ## Getting Started
 
 1. **Clone the repository**:
     ```sh
-    git clone https://github.com/FenrirRhogar/Kinect-SDK-Control-GUI.git
+    git clone https://github.com/FenrirRhogar/Kinect-Control-GUI.git
     ```
 
 2. **Open the solution** in Visual Studio.
@@ -52,7 +44,7 @@ The project is organized into the following directories:
 
 ## Configuration
 
-The application uses a JSON configuration file (`kinect_config.json`) located in the `bin/Debug/net4.0/` directory.
+The application reads `kinect_config.json` from its working directory. The copy in the repository root is copied to the build output automatically; edit it to change sensor, stream and skeleton tracking settings.
 
 ## Usage
 
